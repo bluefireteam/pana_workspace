@@ -1,0 +1,11 @@
+name: pana_workspace_fixture_core
+description: >-
+  Builds greetings. A fixture that the pana_workspace tests score as a package
+  that has not been published yet.
+version: 0.1.0
+repository: https://github.com/bluefireteam/pana_workspace
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace

@@ -1,0 +1,14 @@
+name: pana_workspace_fixture
+description: >-
+  Prints greetings. A fixture that the pana_workspace tests score with a
+  dependency on a sibling package that has not been published yet.
+version: 0.1.0
+repository: https://github.com/bluefireteam/pana_workspace
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+dependencies:
+  pana_workspace_fixture_core: 0.1.0

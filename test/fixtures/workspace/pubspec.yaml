@@ -1,0 +1,9 @@
+name: fixture_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - packages/greeting
+  - packages/greeting_core

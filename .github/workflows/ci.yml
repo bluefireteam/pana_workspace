@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Format, analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart analyze --fatal-infos
+      - run: dart test
+
+  action:
+    name: Action on the fixture workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+      - name: Copy the fixture workspace out of the package
+        run: cp -R test/fixtures/workspace "$RUNNER_TEMP/workspace"
+      - name: Score the fixture packages
+        uses: ./
+        with:
+          working-directory: ${{ runner.temp }}/workspace
+          json-output: ${{ runner.temp }}/pana
+      - name: Check the reports were written
+        run: |
+          test -s "$RUNNER_TEMP/pana/pana_workspace_fixture.json"
+          test -s "$RUNNER_TEMP/pana/pana_workspace_fixture_core.json"

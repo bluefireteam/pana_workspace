@@ -1,0 +1,69 @@
+name: pana workspace
+description: >-
+  Scores the packages of a pub workspace with pana before they are published,
+  resolving sibling packages from the checkout, and fails when one loses
+  pub.dev points.
+author: Blue Fire
+branding:
+  icon: award
+  color: blue
+inputs:
+  packages:
+    description: >-
+      The packages to score, separated by spaces or new lines. Scores every
+      package of the workspace that can be published when empty.
+    required: false
+    default: ''
+  working-directory:
+    description: A directory inside the workspace.
+    required: false
+    default: '.'
+  warn-only:
+    description: >-
+      Titles of the pana subsections that only warn when they lose points, one
+      per line. Replaces the defaults and the warn_only setting of the
+      workspace pubspec when set.
+    required: false
+    default: ''
+  dartdoc:
+    description: >-
+      Whether to run dartdoc, which scores the dartdoc coverage of the public
+      API.
+    required: false
+    default: 'true'
+  json-output:
+    description: >-
+      A directory to write the pana report of each package to, as
+      <package>.json.
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Activate pana_workspace
+      shell: bash
+      run: dart pub global activate --source path "$GITHUB_ACTION_PATH"
+    - name: Score packages with pana
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PACKAGES: ${{ inputs.packages }}
+        WARN_ONLY: ${{ inputs.warn-only }}
+        DARTDOC: ${{ inputs.dartdoc }}
+        JSON_OUTPUT: ${{ inputs.json-output }}
+      run: |
+        set -euo pipefail
+        arguments=(check)
+        while IFS= read -r title; do
+          if [ -n "$title" ]; then
+            arguments+=(--warn-only "$title")
+          fi
+        done <<< "$WARN_ONLY"
+        if [ "$DARTDOC" != 'true' ]; then
+          arguments+=(--no-dartdoc)
+        fi
+        if [ -n "$JSON_OUTPUT" ]; then
+          arguments+=(--json-output "$JSON_OUTPUT")
+        fi
+        read -r -a package_names <<< "$(tr '\n' ' ' <<< "$PACKAGES")"
+        dart pub global run pana_workspace "${arguments[@]}" ${package_names[@]+"${package_names[@]}"}
