@@ -24,7 +24,7 @@ class PanaWorkspaceRunner extends CommandRunner<int> {
     argParser.addOption(
       'directory',
       abbr: 'C',
-      help: 'A directory inside the workspace.',
+      help: 'A directory inside the workspace or the package.',
       defaultsTo: '.',
     );
     addCommand(CheckCommand());
@@ -39,8 +39,7 @@ abstract class _WorkspaceCommand extends Command<int> {
     final root = Workspace.findRoot(directory);
     if (root == null) {
       throw UsageException(
-        'No pubspec.yaml with a workspace section was found in $directory or '
-        'any of its parents.',
+        'No pubspec.yaml was found in $directory or any of its parents.',
         usage,
       );
     }

@@ -51,10 +51,22 @@ void main() {
     expect(Workspace.load(root).packages.keys, unorderedEquals(['root', 'a']));
   });
 
-  test('rejects a pubspec without a workspace section', () {
-    final root = createTree({'pubspec.yaml': pubspec('a')});
+  test('reads a pubspec without a workspace section as a single package', () {
+    final root = createTree({'pubspec.yaml': pubspec('a', inWorkspace: false)});
 
-    expect(() => Workspace.load(root), throwsFormatException);
+    final workspace = Workspace.load(root);
+
+    expect(workspace.root, root);
+    expect(workspace.packages.keys, ['a']);
+    expect(workspace.packages['a']!.directory, root);
+  });
+
+  test('leaves out a single package that cannot be published', () {
+    final root = createTree({
+      'pubspec.yaml': pubspec('a', publishable: false, inWorkspace: false),
+    });
+
+    expect(Workspace.load(root).packages, isEmpty);
   });
 
   test('finds the outermost workspace root', () {
@@ -65,6 +77,20 @@ void main() {
     });
 
     expect(Workspace.findRoot(p.join(root, 'packages', 'a', 'example')), root);
-    expect(Workspace.findRoot(p.dirname(root)), isNull);
+  });
+
+  test('finds the nearest package outside of a workspace', () {
+    final root = createTree({
+      'pubspec.yaml': pubspec('a', inWorkspace: false),
+      'lib/src/a.dart': '',
+    });
+
+    expect(Workspace.findRoot(p.join(root, 'lib', 'src')), root);
+  });
+
+  test('finds no root without a pubspec', () {
+    final root = createTree({'README.md': ''});
+
+    expect(Workspace.findRoot(root), isNull);
   });
 }

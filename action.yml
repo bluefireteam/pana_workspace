@@ -14,7 +14,7 @@ inputs:
     required: false
     default: ''
   working-directory:
-    description: A directory inside the workspace.
+    description: A directory inside the workspace or the package.
     required: false
     default: '.'
   warn-only:

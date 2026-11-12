@@ -15,13 +15,17 @@ checkout and forwards every other request to pub.dev. pana then scores each pack
 archive that `dart pub publish` would upload, and the sibling packages resolve to the versions in
 the checkout.
 
+A repository with a single package works too, without a workspace. There are no siblings to resolve
+then, but `check` still turns the score into a check that fails when the package loses points, with
+the configuration and the GitHub Actions reporting described below.
+
 ## Command line
 
 ```sh
 dart pub global activate pana_workspace
 ```
 
-Run the commands anywhere inside the workspace, or point at it with `--directory`.
+Run the commands anywhere inside the workspace or the package, or point at it with `--directory`.
 
 ```sh
 # Score every package that can be published, and fail when one loses points.
@@ -55,7 +59,8 @@ publishes a new release, without any change to the package:
 
 A package that supports the web also has to be WebAssembly ready by default.
 
-Both can be changed in the root `pubspec.yaml` of the workspace:
+Both can be changed in the root `pubspec.yaml` of the workspace, or in the `pubspec.yaml` of a
+single package:
 
 ```yaml
 pana_workspace:
@@ -68,7 +73,7 @@ pana_workspace:
 
 ## GitHub Action
 
-The action needs Dart, and Flutter when the workspace has Flutter packages.
+The action needs Dart, and Flutter when there are Flutter packages to score.
 
 ```yaml
 jobs:
@@ -83,7 +88,7 @@ jobs:
 | Input               | Default | Description                                                |
 | ------------------- | ------- | ---------------------------------------------------------- |
 | `packages`          | all     | The packages to score, separated by spaces or new lines.   |
-| `working-directory` | `.`     | A directory inside the workspace.                          |
+| `working-directory` | `.`     | A directory inside the workspace or the package.           |
 | `warn-only`         |         | Subsection titles that only warn, one per line.            |
 | `dartdoc`           | `true`  | Whether to run dartdoc, which scores the dartdoc coverage. |
 | `json-output`       |         | A directory to write the pana report of each package to.   |

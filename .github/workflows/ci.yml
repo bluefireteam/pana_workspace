@@ -22,7 +22,7 @@ jobs:
       - run: dart test
 
   action:
-    name: Action on the fixture workspace
+    name: Action on the fixture workspace and a single package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,3 +38,5 @@ jobs:
         run: |
           test -s "$RUNNER_TEMP/pana/pana_workspace_fixture.json"
           test -s "$RUNNER_TEMP/pana/pana_workspace_fixture_core.json"
+      - name: Score this repository as a single package
+        uses: ./
