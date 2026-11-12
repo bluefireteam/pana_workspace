@@ -1,0 +1,29 @@
+name: Tag release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-release:
+    name: Create tags for release
+    permissions:
+      actions: write
+      contents: write
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'chore(release)')
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+      - uses: bluefireteam/melos-action@b79b63bcd183f823740a7976cbdb4b0fc95a0eb8 # v3.10.0
+        with:
+          tag: true
+      - name: Trigger publish when the version is not published
+        run: |
+          melos exec -c1 --no-published --no-private -- \
+          gh workflow run release-publish.yml --ref v\$MELOS_PACKAGE_VERSION
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

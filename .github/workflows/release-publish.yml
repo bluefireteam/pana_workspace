@@ -1,0 +1,27 @@
+name: Publish package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish package
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+      - uses: bluefireteam/melos-action@b79b63bcd183f823740a7976cbdb4b0fc95a0eb8 # v3.10.0
+        with:
+          publish: true
+          create-release: true
+      - name: Move the major version tag of the action
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: |
+          major="${GITHUB_REF_NAME%%.*}"
+          git tag --force "$major"
+          git push --force origin "refs/tags/$major"
