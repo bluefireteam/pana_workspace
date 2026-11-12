@@ -3,7 +3,7 @@ description: >-
   Scores a package, or the packages of a pub workspace, with pana before they
   are published, resolving siblings from the checkout, and fails when one loses
   pub.dev points.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/bluefireteam/pana_workspace
 issue_tracker: https://github.com/bluefireteam/pana_workspace/issues
 topics:
