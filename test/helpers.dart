@@ -22,13 +22,14 @@ String pubspec(
   String? version = '1.0.0',
   Map<String, String> dependencies = const {},
   bool publishable = true,
+  bool inWorkspace = true,
 }) => [
   'name: $name',
   if (version != null) 'version: $version',
   if (!publishable) 'publish_to: none',
   'environment:',
   '  sdk: ^3.11.0',
-  'resolution: workspace',
+  if (inWorkspace) 'resolution: workspace',
   if (dependencies.isNotEmpty) 'dependencies:',
   for (final MapEntry(:key, :value) in dependencies.entries) '  $key: $value',
 ].join('\n');

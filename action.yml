@@ -1,6 +1,6 @@
 name: pana workspace
 description: >-
-  Scores the packages of a pub workspace with pana, resolving siblings from the
+  Scores a package or a pub workspace with pana, resolving siblings from the
   checkout, and fails when one loses points.
 author: Blue Fire
 branding:
@@ -14,7 +14,7 @@ inputs:
     required: false
     default: ''
   working-directory:
-    description: A directory inside the workspace.
+    description: A directory inside the workspace or the package.
     required: false
     default: '.'
   warn-only:

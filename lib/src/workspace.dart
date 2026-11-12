@@ -5,7 +5,7 @@ import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-/// A package of a pub workspace that can be published.
+/// A package of a pub workspace, or a single package, that can be published.
 class WorkspacePackage {
   /// Creates a package from its [directory] and parsed [pubspec].
   WorkspacePackage({required this.directory, required this.pubspec});
@@ -23,7 +23,8 @@ class WorkspacePackage {
   String get version => pubspec['version']! as String;
 }
 
-/// A pub workspace and the packages in it that can be published.
+/// A pub workspace, or a single package, and the packages in it that can be
+/// published.
 class Workspace {
   /// Creates a workspace from its [root] and the [packages] in it.
   Workspace({required this.root, required this.packages});
@@ -31,16 +32,12 @@ class Workspace {
   /// Reads the workspace whose root pubspec is in [root], including the
   /// members of nested workspaces.
   ///
-  /// Members without a version or with `publish_to: none` are left out,
-  /// since pub.dev never scores them.
+  /// A root pubspec without a workspace section is read as a workspace with
+  /// that single package. Members without a version or with
+  /// `publish_to: none` are left out, since pub.dev never scores them.
   static Workspace load(String root) {
     final rootDirectory = p.normalize(p.absolute(root));
     final rootPubspec = _readPubspec(rootDirectory);
-    if (rootPubspec['workspace'] is! List) {
-      throw FormatException(
-        'The pubspec.yaml in $rootDirectory has no workspace section.',
-      );
-    }
     final packages = <String, WorkspacePackage>{};
     void visit(String directory, Map<String, Object?> pubspec) {
       if (pubspec['publish_to'] != 'none' && pubspec['version'] != null) {
@@ -64,18 +61,23 @@ class Workspace {
   /// Finds the root of the workspace that [directory] belongs to.
   ///
   /// Returns the outermost ancestor of [directory], [directory] included,
-  /// whose pubspec has a workspace section, or `null` if there is none.
+  /// whose pubspec has a workspace section. Without one, returns the nearest
+  /// ancestor with a pubspec, so that a single package is its own workspace,
+  /// or `null` if there is no pubspec at all.
   static String? findRoot(String directory) {
-    String? root;
+    String? workspaceRoot;
+    String? packageRoot;
     var current = p.normalize(p.absolute(directory));
     while (true) {
-      final pubspec = File(p.join(current, 'pubspec.yaml'));
-      if (pubspec.existsSync() && _readPubspec(current)['workspace'] != null) {
-        root = current;
+      if (File(p.join(current, 'pubspec.yaml')).existsSync()) {
+        packageRoot ??= current;
+        if (_readPubspec(current)['workspace'] != null) {
+          workspaceRoot = current;
+        }
       }
       final parent = p.dirname(current);
       if (parent == current) {
-        return root;
+        return workspaceRoot ?? packageRoot;
       }
       current = parent;
     }

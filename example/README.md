@@ -8,6 +8,13 @@ cd my_workspace
 pana_workspace check
 ```
 
+Score a package that is not in a workspace, from anywhere inside it:
+
+```sh
+cd my_package
+pana_workspace check
+```
+
 Score one package from a GitHub Actions workflow:
 
 ```yaml
