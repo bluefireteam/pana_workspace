@@ -1,5 +1,5 @@
-/// Scores the packages of a pub workspace with pana before they are
-/// published, resolving sibling packages from the checkout.
+/// Scores a package, or the packages of a pub workspace, with pana before
+/// they are published, resolving sibling packages from the checkout.
 library;
 
 export 'src/commands.dart';

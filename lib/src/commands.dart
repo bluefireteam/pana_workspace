@@ -18,8 +18,9 @@ class PanaWorkspaceRunner extends CommandRunner<int> {
   PanaWorkspaceRunner()
     : super(
         'pana_workspace',
-        'Scores the packages of a pub workspace with pana before they are '
-            'published, resolving sibling packages from the checkout.',
+        'Scores a package, or the packages of a pub workspace, with pana '
+            'before they are published, resolving sibling packages from the '
+            'checkout.',
       ) {
     argParser.addOption(
       'directory',
@@ -230,9 +231,9 @@ class ServeCommand extends _WorkspaceCommand {
 
   @override
   String get description =>
-      'Serves the packages of the workspace from the checkout and forwards '
-      'every other request upstream. Pass the printed URL to '
-      '`pana --hosted-url`.';
+      'Serves the packages of the workspace, or the single package, from the '
+      'checkout and forwards every other request upstream. Pass the printed '
+      'URL to `pana --hosted-url`.';
 
   @override
   Future<int> run() async {
@@ -247,7 +248,8 @@ class ServeCommand extends _WorkspaceCommand {
   }
 }
 
-/// Prints the packages of the workspace that can be published.
+/// Prints the packages of the workspace, or the single package, that can be
+/// published.
 class ListCommand extends _WorkspaceCommand {
   /// Creates the command and its options.
   ListCommand() {
@@ -259,7 +261,8 @@ class ListCommand extends _WorkspaceCommand {
 
   @override
   String get description =>
-      'Prints the packages of the workspace that can be published.';
+      'Prints the packages of the workspace, or the single package, that can '
+      'be published.';
 
   @override
   Future<int> run() async {
@@ -271,13 +274,14 @@ class ListCommand extends _WorkspaceCommand {
   }
 }
 
-/// The `pana_workspace` section of the workspace root pubspec.
+/// The `pana_workspace` section of the root pubspec of the workspace, or of
+/// the pubspec of a single package.
 class CheckSettings {
   /// Creates settings with the subsections that only warn and whether
   /// WebAssembly readiness is required.
   CheckSettings({required this.warnOnly, required this.requireWasm});
 
-  /// Reads the settings of the workspace in [root].
+  /// Reads the settings of the workspace or the package in [root].
   ///
   /// ```yaml
   /// pana_workspace:

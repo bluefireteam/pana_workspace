@@ -5,7 +5,7 @@ import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-/// A package of a pub workspace that can be published.
+/// A package of a pub workspace, or a single package, that can be published.
 class WorkspacePackage {
   /// Creates a package from its [directory] and parsed [pubspec].
   WorkspacePackage({required this.directory, required this.pubspec});

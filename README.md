@@ -1,6 +1,6 @@
 # pana_workspace
 
-Scores the packages of a [pub workspace](https://dart.dev/tools/pub/workspaces) with
+Scores a package, or the packages of a [pub workspace](https://dart.dev/tools/pub/workspaces), with
 [pana](https://pub.dev/packages/pana) before they are published, and fails when one loses pub.dev
 points.
 
