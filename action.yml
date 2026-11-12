@@ -1,8 +1,7 @@
 name: pana workspace
 description: >-
-  Scores the packages of a pub workspace with pana before they are published,
-  resolving sibling packages from the checkout, and fails when one loses
-  pub.dev points.
+  Scores the packages of a pub workspace with pana, resolving siblings from the
+  checkout, and fails when one loses points.
 author: Blue Fire
 branding:
   icon: award
