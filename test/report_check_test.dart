@@ -52,6 +52,26 @@ const _dependencies = '''
 * Sorry, your package does not support the latest major version of http.
 ''';
 
+const _platforms = '''
+### [~] 10/20 points: Supports 6 of 6 possible platforms (**iOS**, **Android**, **Web**, **Windows**, **macOS**, **Linux**)
+
+* ✓ Android
+
+* ✓ Web
+
+WASM compatibility:
+
+<details>
+<summary>
+Package not compatible with runtime wasm
+</summary>
+
+Because:
+* `package:a/a.dart` that imports:
+* `dart:io`
+</details>
+''';
+
 void main() {
   test('passes a package that scores the maximum', () {
     final result = checkSummary(
@@ -153,6 +173,49 @@ void main() {
       ).passed,
       isTrue,
     );
+  });
+
+  group('platform support of a web package that is not WebAssembly ready', () {
+    final section = _section(
+      title: 'Platform support',
+      grantedPoints: 10,
+      maxPoints: 20,
+      summary: _platforms,
+    );
+
+    test('fails when WebAssembly readiness is required', () {
+      final result = checkSummary(
+        'a',
+        _summary([section], tags: ['platform:web']),
+      );
+
+      expect(result.errors.single.subsectionTitle, startsWith('Supports 6'));
+      expect(result.passed, isFalse);
+    });
+
+    test('only warns when WebAssembly readiness is not required', () {
+      final result = checkSummary(
+        'a',
+        _summary([section], tags: ['platform:web']),
+        requireWasm: false,
+      );
+
+      expect(result.warnings.single.detail, contains('runtime wasm'));
+      expect(result.passed, isTrue);
+    });
+
+    test('fails when the Swift Package Manager is also missing', () {
+      final result = checkSummary(
+        'a',
+        _summary(
+          [section],
+          tags: ['platform:web', 'is:darwin-legacy-native-build'],
+        ),
+        requireWasm: false,
+      );
+
+      expect(result.passed, isFalse);
+    });
   });
 
   test('escapes workflow command values', () {

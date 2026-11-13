@@ -57,7 +57,9 @@ publishes a new release, without any change to the package:
 - All of the package dependencies are supported in the latest version
 - Package supports latest stable Dart and Flutter SDKs
 
-A package that supports the web also has to be WebAssembly ready by default.
+A package that supports the web also has to be WebAssembly ready by default. With
+`require_wasm: false`, the platform support subsection only warns when WebAssembly is the only
+reason that it lost points.
 
 Both can be changed in the root `pubspec.yaml` of the workspace, or in the `pubspec.yaml` of a
 single package:
@@ -69,7 +71,11 @@ pana_workspace:
   require_wasm: false
 ```
 
-`--warn-only` and `--[no-]require-wasm` override the pubspec.
+The root `pubspec.yaml` of a workspace sets them for every package, and the `pubspec.yaml` of a
+package in the workspace overrides each setting that it sets for that package. A `warn_only` list
+in a package replaces the one of the workspace, so repeat the subsections that should keep warning.
+
+`--warn-only` and `--[no-]require-wasm` override the pubspecs.
 
 ## GitHub Action
 

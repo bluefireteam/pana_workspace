@@ -49,6 +49,16 @@ class Finding {
   /// Whether the finding only warns instead of failing the check.
   final bool warnOnly;
 
+  /// This finding, but only warning instead of failing the check.
+  Finding asWarning() => Finding(
+    sectionTitle: sectionTitle,
+    subsectionTitle: subsectionTitle,
+    grantedPoints: grantedPoints,
+    maxPoints: maxPoints,
+    body: body,
+    warnOnly: true,
+  );
+
   /// What pana says is missing, in plain text.
   String get detail {
     final reasons = _issue
@@ -98,7 +108,9 @@ class CheckResult {
 ///
 /// Every subsection that lost points becomes a [Finding], which only warns
 /// when its title is in [warnOnlySubsections]. When [requireWasm] is set, a
-/// package tagged `platform:web` must also be tagged `is:wasm-ready`.
+/// package tagged `platform:web` must also be tagged `is:wasm-ready`. When it
+/// is not set, the platform support subsection only warns when WebAssembly is
+/// the only reason that it lost points.
 CheckResult checkSummary(
   String package,
   Summary summary, {
@@ -106,19 +118,36 @@ CheckResult checkSummary(
   bool requireWasm = true,
 }) {
   final tags = summary.tags ?? const [];
+  final notWasmReady =
+      tags.contains('platform:web') && !tags.contains('is:wasm-ready');
+  final onlyMissesWasm =
+      notWasmReady && !tags.contains('is:darwin-legacy-native-build');
   return CheckResult(
     package: package,
     summary: summary,
     findings: [
       for (final section in summary.report?.sections ?? const <ReportSection>[])
-        ...sectionFindings(section, warnOnlySubsections),
+        for (final finding in sectionFindings(section, warnOnlySubsections))
+          if (!requireWasm && onlyMissesWasm && _isWasmPenalty(finding))
+            finding.asWarning()
+          else
+            finding,
     ],
-    missingWasm:
-        requireWasm &&
-        tags.contains('platform:web') &&
-        !tags.contains('is:wasm-ready'),
+    missingWasm: requireWasm && notWasmReady,
   );
 }
+
+bool _isWasmPenalty(Finding finding) =>
+    finding.sectionTitle == platformSupportSection &&
+    finding.subsectionTitle.startsWith('Supports ') &&
+    finding.maxPoints - finding.grantedPoints == wasmPenalty;
+
+/// The title of the pana report section that scores the supported platforms.
+const platformSupportSection = 'Platform support';
+
+/// The points that pana takes from the platform support subsection when a
+/// package supports the web but is not WebAssembly ready.
+const wasmPenalty = 10;
 
 /// Splits a report [section] into one finding per subsection that lost
 /// points.
