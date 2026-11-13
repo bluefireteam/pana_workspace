@@ -73,15 +73,16 @@ class CheckCommand extends _WorkspaceCommand {
         splitCommas: false,
         help:
             'The title of a subsection that only warns when it loses points. '
-            'Replaces the defaults and the warn_only setting of the workspace '
-            'pubspec.',
+            'Replaces the defaults and the warn_only settings of the '
+            'pubspecs.',
       )
       ..addFlag(
         'require-wasm',
         defaultsTo: null,
         help:
             'Fail a package that supports the web but is not WebAssembly '
-            'ready. On unless the workspace pubspec sets require_wasm: false.',
+            'ready. On unless the pubspec of the workspace or of the package '
+            'sets require_wasm: false.',
       )
       ..addFlag(
         'dartdoc',
@@ -112,13 +113,25 @@ class CheckCommand extends _WorkspaceCommand {
   Future<int> run() async {
     final arguments = argResults!;
     final workspace = loadWorkspace();
-    final settings = CheckSettings.fromPubspec(workspace.root);
-    final warnOnly = arguments.wasParsed('warn-only')
-        ? arguments.multiOption('warn-only').toSet()
-        : settings.warnOnly;
-    final requireWasm = arguments.wasParsed('require-wasm')
-        ? arguments.flag('require-wasm')
-        : settings.requireWasm;
+    final workspaceSettings = CheckSettings.fromPubspec(workspace.root);
+    CheckSettings settingsOf(WorkspacePackage package) {
+      final settings = package.directory == workspace.root
+          ? workspaceSettings
+          : CheckSettings.fromSection(
+              package.pubspec['pana_workspace'],
+              inherited: workspaceSettings,
+              source: p.join(package.directory, 'pubspec.yaml'),
+            );
+      return CheckSettings(
+        warnOnly: arguments.wasParsed('warn-only')
+            ? arguments.multiOption('warn-only').toSet()
+            : settings.warnOnly,
+        requireWasm: arguments.wasParsed('require-wasm')
+            ? arguments.flag('require-wasm')
+            : settings.requireWasm,
+      );
+    }
+
     final names = arguments.rest.isEmpty
         ? (workspace.packages.keys.toList()..sort())
         : arguments.rest;
@@ -131,6 +144,9 @@ class CheckCommand extends _WorkspaceCommand {
         );
       }
     }
+    final settingsByName = {
+      for (final name in names) name: settingsOf(workspace.packages[name]!),
+    };
 
     final logs = Logger.root.onRecord.listen((record) {
       if (arguments.flag('verbose') || record.level >= Level.SEVERE) {
@@ -186,11 +202,12 @@ class CheckCommand extends _WorkspaceCommand {
           passed = false;
           continue;
         }
+        final settings = settingsByName[name]!;
         final result = checkSummary(
           name,
           summary,
-          warnOnlySubsections: warnOnly,
-          requireWasm: requireWasm,
+          warnOnlySubsections: settings.warnOnly,
+          requireWasm: settings.requireWasm,
         );
         await reporter.result(result);
         passed &= result.passed;
@@ -274,14 +291,22 @@ class ListCommand extends _WorkspaceCommand {
   }
 }
 
-/// The `pana_workspace` section of the root pubspec of the workspace, or of
-/// the pubspec of a single package.
+/// The `pana_workspace` section of a pubspec.
+///
+/// The root pubspec of the workspace sets it for every package, and the
+/// pubspec of a package overrides it for that package.
 class CheckSettings {
   /// Creates settings with the subsections that only warn and whether
   /// WebAssembly readiness is required.
   CheckSettings({required this.warnOnly, required this.requireWasm});
 
-  /// Reads the settings of the workspace or the package in [root].
+  /// The settings that apply when no pubspec has a `pana_workspace` section.
+  static final defaults = CheckSettings(
+    warnOnly: defaultWarnOnlySubsections,
+    requireWasm: true,
+  );
+
+  /// Reads the settings of the pubspec in [directory].
   ///
   /// ```yaml
   /// pana_workspace:
@@ -289,35 +314,53 @@ class CheckSettings {
   ///     - Package supports latest stable Dart and Flutter SDKs
   ///   require_wasm: false
   /// ```
-  factory CheckSettings.fromPubspec(String root) {
-    final pubspec = Workspace.readPubspec(root);
-    final section = pubspec['pana_workspace'];
+  ///
+  /// The settings that the pubspec leaves out are taken from [inherited].
+  factory CheckSettings.fromPubspec(
+    String directory, {
+    CheckSettings? inherited,
+  }) => CheckSettings.fromSection(
+    Workspace.readPubspec(directory)['pana_workspace'],
+    inherited: inherited,
+    source: p.join(directory, 'pubspec.yaml'),
+  );
+
+  /// Reads the `pana_workspace` [section] of a pubspec, which is `null` when
+  /// the pubspec does not have one.
+  ///
+  /// The settings that the section leaves out are taken from [inherited], and
+  /// [source] names the pubspec in the error when the section is invalid.
+  factory CheckSettings.fromSection(
+    Object? section, {
+    CheckSettings? inherited,
+    String? source,
+  }) {
+    final parent = inherited ?? defaults;
     if (section == null) {
-      return CheckSettings(
-        warnOnly: defaultWarnOnlySubsections,
-        requireWasm: true,
-      );
+      return parent;
     }
     if (section is! Map<String, Object?>) {
-      throw const FormatException('pana_workspace must be a map.');
+      throw FormatException('pana_workspace must be a map.', source);
     }
     final warnOnly = section['warn_only'];
     final requireWasm = section['require_wasm'];
     if (warnOnly != null && warnOnly is! List) {
-      throw const FormatException(
+      throw FormatException(
         'pana_workspace.warn_only must be a list of subsection titles.',
+        source,
       );
     }
     if (requireWasm != null && requireWasm is! bool) {
-      throw const FormatException(
+      throw FormatException(
         'pana_workspace.require_wasm must be true or false.',
+        source,
       );
     }
     return CheckSettings(
       warnOnly: warnOnly == null
-          ? defaultWarnOnlySubsections
+          ? parent.warnOnly
           : {for (final title in warnOnly as List) '$title'},
-      requireWasm: requireWasm as bool? ?? true,
+      requireWasm: requireWasm as bool? ?? parent.requireWasm,
     );
   }
 

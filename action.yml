@@ -20,8 +20,8 @@ inputs:
   warn-only:
     description: >-
       Titles of the pana subsections that only warn when they lose points, one
-      per line. Replaces the defaults and the warn_only setting of the
-      workspace pubspec when set.
+      per line. Replaces the defaults and the warn_only settings of the
+      pubspecs when set.
     required: false
     default: ''
   dartdoc:
